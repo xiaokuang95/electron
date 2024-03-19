@@ -17,8 +17,8 @@ environment:
   PYTHONIOENCODING: UTF-8
 
 # The following lines are needed when baking from a completely new image (eg MicrosoftWindowsServer:WindowsServer:2019-Datacenter:latest via image: base-windows-server2019)
-# init:
-#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+init:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 #   - appveyor version
 #   - ps: $ErrorActionPreference = 'Stop'
 #   - ps: 'Write-Host "OS Build: $((Get-CimInstance Win32_OperatingSystem).BuildNumber)"'
