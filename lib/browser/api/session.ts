@@ -39,6 +39,7 @@ async function getNativePickerSource (preferredDisplaySurface: string) {
   };
 
   const mediaStreams = await desktopCapturer.getSources(options);
+  console.log("MEDIASREEAMS", mediaStreams);
   return mediaStreams[0];
 }
 
