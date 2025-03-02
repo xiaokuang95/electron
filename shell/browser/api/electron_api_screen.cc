@@ -20,6 +20,8 @@
 #include "ui/display/display.h"
 #include "ui/display/screen.h"
 #include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/point_conversions.h"
+#include "ui/gfx/geometry/point_f.h"
 
 #if BUILDFLAG(IS_WIN)
 #include "ui/display/win/screen_win.h"
@@ -126,6 +128,37 @@ void Screen::OnDisplayMetricsChanged(const display::Display& display,
                                 MetricsToArray(changed_metrics)));
 }
 
+gfx::Point Screen::ScreenToDIPPoint(const gfx::PointF& point_px) {
+#if BUILDFLAG(IS_WIN)
+  return display::win::ScreenWin::ScreenToDIPPoint(point_px);
+#elif defined(IS_OZONE_X11)
+  display::Display display =
+      GetDisplayNearestPoint(gfx::ToFlooredPoint(point_px));
+  gfx::Vector2d delta_px = point_px - display.native_origin();
+  gfx::Vector2dF delta_dip =
+      gfx::ScaleVector2d(delta_px, 1.0 / display.device_scale_factor());
+  return display.bounds().origin() + delta_dip;
+#else  // Wayland
+  return gfx::ToFlooredPoint(point_px);
+#endif
+}
+
+gfx::Point Screen::DIPToScreenPoint(const gfx::Point& point_dip) {
+#if BUILDFLAG(IS_WIN)
+  return display::win::ScreenWin::DIPToScreenPoint(point_dip);
+#elif defined(IS_OZONE_X11)
+  display::Display display =
+      GetDisplayNearestPoint(gfx::ToFlooredPoint(point_dip));
+  gfx::Rect bounds_dip = display.bounds();
+  gfx::Vector2d delta_dip = point_dip - bounds_dip.origin();
+  gfx::Vector2dF delta_px =
+      gfx::ScaleVector2d(delta_dip, display.device_scale_factor());
+  return display.native_origin() + delta_px;
+#else  // Wayland
+  return point_dip;
+#endif
+}
+
 // static
 v8::Local<v8::Value> Screen::Create(gin_helper::ErrorThrower error_thrower) {
   if (!Browser::Get()->is_ready()) {
@@ -153,9 +186,9 @@ gin::ObjectTemplateBuilder Screen::GetObjectTemplateBuilder(
       .SetMethod("getPrimaryDisplay", &Screen::GetPrimaryDisplay)
       .SetMethod("getAllDisplays", &Screen::GetAllDisplays)
       .SetMethod("getDisplayNearestPoint", &Screen::GetDisplayNearestPoint)
+      .SetMethod("screenToDipPoint", &Screen::ScreenToDIPPoint)
+      .SetMethod("dipToScreenPoint", &Screen::DIPToScreenPoint)
 #if BUILDFLAG(IS_WIN)
-      .SetMethod("screenToDipPoint", &display::win::ScreenWin::ScreenToDIPPoint)
-      .SetMethod("dipToScreenPoint", &display::win::ScreenWin::DIPToScreenPoint)
       .SetMethod("screenToDipRect", &ScreenToDIPRect)
       .SetMethod("dipToScreenRect", &DIPToScreenRect)
 #endif
