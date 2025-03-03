@@ -33,7 +33,7 @@ runs:
           exit 1
         fi
         azcopy copy --log-level=ERROR \
-          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
+          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar.gz
     env:
       AZURE_AKS_CACHE_STORAGE_ACCOUNT: f723719aa87a34622b5f7f3
       AZURE_AKS_CACHE_SHARE_NAME: pvc-f6a4089f-b082-4bee-a3f9-c3e1c0c02d8f
@@ -43,14 +43,14 @@ runs:
   - name: Unzip and Ensure Src Cache
     shell: bash
     run: |
-      echo "Downloaded cache is $(du -sh $DEPSHASH.tar | cut -f1)"
-      if [ `du $DEPSHASH.tar | cut -f1` = "0" ]; then
+      echo "Downloaded cache is $(du -sh $DEPSHASH.tar.gz | cut -f1)"
+      if [ `du $DEPSHASH.tar.gz | cut -f1` = "0" ]; then
         echo "Cache is empty - exiting"
         exit 1
       fi
       
       mkdir temp-cache
-      tar -xf $DEPSHASH.tar -C temp-cache
+      tar -xzf $DEPSHASH.tar.gz -C temp-cache
       echo "Unzipped cache is $(du -sh temp-cache/src | cut -f1)"
 
       if [ -d "temp-cache/src" ]; then
@@ -59,7 +59,7 @@ runs:
         mv temp-cache/src src
 
         echo "Deleting zip file"
-        rm -rf $DEPSHASH.tar
+        rm -rf $DEPSHASH.tar.gz
       fi
 
       if [ ! -d "src/third_party/blink" ]; then
