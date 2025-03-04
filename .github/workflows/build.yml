@@ -115,6 +115,7 @@ jobs:
       uses: ./src/electron/.github/actions/checkout
       with:
         generate-sas-token: 'true'
+        target-platform: macos
 
   checkout-linux:
     needs: setup
@@ -171,6 +172,7 @@ jobs:
       uses: ./src/electron/.github/actions/checkout
       with:
         generate-sas-token: 'true'
+        target-platform: win
 
   # GN Check Jobs
   macos-gn-check:
