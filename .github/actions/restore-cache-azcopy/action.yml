@@ -6,18 +6,25 @@ inputs:
 runs:
   using: "composite"
   steps:
+  - name: Install zstd on Windows for actions cache
+    if: ${{ inputs.target-platform == 'win' }}
+    shell: powershell
+    run: |        
+      choco install -y --no-progress zstandard --version=1.5.6
   - name: Obtain SAS Key
     continue-on-error: true
     uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf
     with:
       path: sas-token
       key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-1
+      enableCrossOsArchive: true
   - name: Obtain SAS Key
     continue-on-error: true
     uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf
     with:
       path: sas-token
       key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-${{ github.run_attempt }}
+      enableCrossOsArchive: true
   - name: Download Src Cache from AKS (macos)
     if: ${{ inputs.target-platform == 'macos' }}
     # The cache will always exist here as a result of the checkout job
