@@ -12,14 +12,14 @@ runs:
     with:
       path: |
         sas-token
-      key: sas-key-${{ github.run_number }}-1
+      key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-1
   - name: Obtain SAS Key
     continue-on-error: true
     uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57
     with:
       path: |
         sas-token
-      key: sas-key-${{ github.run_number }}-${{ github.run_attempt }}
+      key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-${{ github.run_attempt }}
   - name: Download Src Cache from AKS (macos)
     if: ${{ inputs.target-platform == 'macos' }}
     # The cache will always exist here as a result of the checkout job

@@ -9,6 +9,8 @@ inputs:
     description: 'Whether to persist the cache to the shared drive'
     required: false
     default: 'true'
+  target-platform:
+    description: 'Target platform, should be linux, win, macos'    
 runs:
   using: "composite"
   steps:
@@ -51,7 +53,7 @@ runs:
     with:
       path: |
         sas-token
-      key: sas-key-${{ github.run_number }}-${{ github.run_attempt }}
+      key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-${{ github.run_attempt }}
   - name: Check If Cache Exists
     id: check-cache
     shell: bash
