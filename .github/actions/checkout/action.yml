@@ -44,7 +44,7 @@ runs:
     if: ${{ inputs.generate-sas-token == 'true' }}
     shell: bash
     run: |
-      curl --unix-socket /var/run/sas/sas.sock --fail "http://foo/$DEPSHASH.tar.gz" > sas-token
+      curl --unix-socket /var/run/sas/sas.sock --fail "http://foo/$DEPSHASH.tar" > sas-token
   - name: Save SAS Key
     if: ${{ inputs.generate-sas-token == 'true' }}
     uses: actions/cache/save@1bd1e32a3bdc45362d1e726936510720a7c30a57
@@ -60,7 +60,7 @@ runs:
         echo "Not using cache this time..."
         echo "cache_exists=false" >> $GITHUB_OUTPUT
       else
-        cache_path=/mnt/cross-instance-cache/$DEPSHASH.tar.gz
+        cache_path=/mnt/cross-instance-cache/$DEPSHASH.tar
         echo "Using cache key: $DEPSHASH"
         echo "Checking for cache in: $cache_path"
         if [ ! -f "$cache_path" ] || [ `du $cache_path | cut -f1` = "0" ]; then
@@ -165,14 +165,14 @@ runs:
     shell: bash
     run: |
       echo "Uncompressed src size: $(du -sh src | cut -f1 -d' ')"
-      tar -czf $DEPSHASH.tar.gz src
-      echo "Compressed src to $(du -sh $DEPSHASH.tar.gz | cut -f1 -d' ')"
-      cp ./$DEPSHASH.tar.gz /mnt/cross-instance-cache/
+      tar -cf $DEPSHASH.tar src
+      echo "Compressed src to $(du -sh $DEPSHASH.tar | cut -f1 -d' ')"
+      cp ./$DEPSHASH.tar /mnt/cross-instance-cache/
   - name: Persist Src Cache
     if: ${{ steps.check-cache.outputs.cache_exists == 'false' && inputs.use-cache == 'true' }}
     shell: bash
     run: |
-      final_cache_path=/mnt/cross-instance-cache/$DEPSHASH.tar.gz
+      final_cache_path=/mnt/cross-instance-cache/$DEPSHASH.tar
       echo "Using cache key: $DEPSHASH"
       echo "Checking path: $final_cache_path"
       if [ ! -f "$final_cache_path" ]; then

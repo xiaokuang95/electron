@@ -152,7 +152,7 @@ jobs:
         node src/electron/script/generate-deps-hash.js
         DEPSHASH=v1-src-cache-$(cat src/electron/.depshash)
         echo "DEPSHASH=$DEPSHASH" >> $GITHUB_ENV
-        echo "CACHE_PATH=$DEPSHASH.tar.gz" >> $GITHUB_ENV
+        echo "CACHE_PATH=$DEPSHASH.tar" >> $GITHUB_ENV
     - name: Install 7zip on Windows
       if: ${{ inputs.target-platform == 'win' }}
       shell: powershell

@@ -37,7 +37,7 @@ runs:
           exit 1
         fi
         azcopy copy --log-level=ERROR \
-          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar.gz
+          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
     env:
       AZURE_AKS_CACHE_STORAGE_ACCOUNT: f723719aa87a34622b5f7f3
       AZURE_AKS_CACHE_SHARE_NAME: pvc-f6a4089f-b082-4bee-a3f9-c3e1c0c02d8f
@@ -58,7 +58,7 @@ runs:
           exit 1
         }
         azcopy copy --log-level=ERROR `
-          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar.gz
+          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
     env:
       AZURE_AKS_CACHE_STORAGE_ACCOUNT: f723719aa87a34622b5f7f3
       AZURE_AKS_CACHE_SHARE_NAME: pvc-f6a4089f-b082-4bee-a3f9-c3e1c0c02d8f      
@@ -74,14 +74,14 @@ runs:
     if: ${{ inputs.target-platform == 'macos' }}
     shell: bash
     run: |
-      echo "Downloaded cache is $(du -sh $DEPSHASH.tar.gz | cut -f1)"
-      if [ `du $DEPSHASH.tar.gz | cut -f1` = "0" ]; then
+      echo "Downloaded cache is $(du -sh $DEPSHASH.tar | cut -f1)"
+      if [ `du $DEPSHASH.tar | cut -f1` = "0" ]; then
         echo "Cache is empty - exiting"
         exit 1
       fi
       
       mkdir temp-cache
-      tar -xzf $DEPSHASH.tar.gz -C temp-cache
+      tar -xf $DEPSHASH.tar -C temp-cache
       echo "Unzipped cache is $(du -sh temp-cache/src | cut -f1)"
 
       if [ -d "temp-cache/src" ]; then
@@ -90,7 +90,7 @@ runs:
         mv temp-cache/src src
 
         echo "Deleting zip file"
-        rm -rf $DEPSHASH.tar.gz
+        rm -rf $DEPSHASH.tar
       fi
 
       if [ ! -d "src/third_party/blink" ]; then
@@ -106,13 +106,13 @@ runs:
     shell: powershell
     run: |
       Write-Host "Downloaded cache is $(Get-Item $DEPSHASH.tar).length"
-      if ((Get-Item $DEPSHASH.tar.gz).length -eq 0) {
+      if ((Get-Item $DEPSHASH.tar).length -eq 0) {
         Write-Host "Cache is empty - exiting"
         exit 1
       }
 
       New-Item -ItemType Directory -Path temp-cache
-      C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -oD:temp-cache $DEPSHASH.tar.gz
+      C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -oD:temp-cache $DEPSHASH.tar
       Write-Host "Unzipped cache is $(Get-ChildItem -Recurse temp-cache/src | Measure-Object -Property length -Sum).Sum"
 
       if (Test-Path "temp-cache/src") {
@@ -121,7 +121,7 @@ runs:
         Move-Item temp-cache/src src
 
         Write-Host "Deleting zip file"
-        Remove-Item -Force $DEPSHASH.tar.gz
+        Remove-Item -Force $DEPSHASH.tar
       }
 
       if (-Not (Test-Path "src/third_party/blink")) {
