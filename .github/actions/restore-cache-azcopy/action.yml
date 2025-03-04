@@ -26,8 +26,16 @@ runs:
       path: sas-token
       key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-${{ github.run_attempt }}
       enableCrossOsArchive: true
-  - name: Download Src Cache from AKS (macos)
-    if: ${{ inputs.target-platform == 'macos' }}
+  - name: Set sas-token env variable
+    shell: bash
+    run: |
+      sas_token=$(cat sas-token)
+      if [ -z $sas-token ]; then
+        echo "SAS Token not found; exiting src cache download early..."
+        exit 1
+      fi
+      echo "SAS_TOKEN=$sas-token" >> $GITHUB_ENV
+  - name: Download Src Cache from AKS
     # The cache will always exist here as a result of the checkout job
     # Either it was uploaded to Azure in the checkout job for this commit
     # or it was uploaded in the checkout job for a previous commit.
@@ -37,46 +45,16 @@ runs:
       max_attempts: 3
       retry_on: error
       command: |
-        sas_token=$(cat sas-token)
-        if [ -z $sas-token ]; then
-          echo "SAS Token not found; exiting src cache download early..."
-          exit 1
-        fi
+
         azcopy copy --log-level=ERROR \
-          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
+          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?${{ env.SAS_TOKEN }}" "${{ env.DEPSHASH}}.tar"
     env:
       AZURE_AKS_CACHE_STORAGE_ACCOUNT: f723719aa87a34622b5f7f3
       AZURE_AKS_CACHE_SHARE_NAME: pvc-f6a4089f-b082-4bee-a3f9-c3e1c0c02d8f
-  - name: Download Src Cache from AKS (win)
-    if: ${{ inputs.target-platform == 'win' }}
-    # The cache will always exist here as a result of the checkout job
-    # Either it was uploaded to Azure in the checkout job for this commit
-    # or it was uploaded in the checkout job for a previous commit.
-    uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
-    with:
-      timeout_minutes: 30
-      max_attempts: 3
-      retry_on: error
-      command: |
-        $sas_token = Get-Content sas-token
-        if ([string]::IsNullOrEmpty($sas_token)) {
-          Write-Host "SAS Token not found; exiting src cache download early..."
-          exit 1
-        }
-        azcopy copy --log-level=ERROR `
-          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
-    env:
-      AZURE_AKS_CACHE_STORAGE_ACCOUNT: f723719aa87a34622b5f7f3
-      AZURE_AKS_CACHE_SHARE_NAME: pvc-f6a4089f-b082-4bee-a3f9-c3e1c0c02d8f      
   - name: Clean SAS Key (macos)
-    if: ${{ inputs.target-platform == 'macos' }}
     shell: bash
     run: rm -f sas-token
-  - name: Clean SAS Key (win)
-    if: ${{ inputs.target-platform == 'win' }}
-    shell: powershell
-    run: Remove-Item -Path sas-token -Force
-  - name: Unzip and Ensure Src Cache
+  - name: Unzip and Ensure Src Cache (macOS)
     if: ${{ inputs.target-platform == 'macos' }}
     shell: bash
     run: |
@@ -107,7 +85,7 @@ runs:
       echo "Wiping Electron Directory"
       rm -rf src/electron
 
-  - name: Unzip and Ensure Src Cache
+  - name: Unzip and Ensure Src Cache (Windows)
     if: ${{ inputs.target-platform == 'win' }}
     shell: powershell
     run: |
