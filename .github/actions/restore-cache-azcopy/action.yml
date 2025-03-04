@@ -26,8 +26,7 @@ runs:
       path: sas-token
       key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-${{ github.run_attempt }}
       enableCrossOsArchive: true
-  - name: Download Src Cache from AKS (macos)
-    if: ${{ inputs.target-platform == 'macos' }}
+  - name: Download Src Cache from AKS
     # The cache will always exist here as a result of the checkout job
     # Either it was uploaded to Azure in the checkout job for this commit
     # or it was uploaded in the checkout job for a previous commit.
