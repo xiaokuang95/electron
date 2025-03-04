@@ -11,6 +11,7 @@ runs:
     shell: powershell
     run: |        
       choco install -y --no-progress zstandard --version=1.5.6
+      choco install -y --no-progress azcopy10
   - name: Obtain SAS Key
     continue-on-error: true
     uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf
