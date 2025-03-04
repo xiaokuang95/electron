@@ -87,14 +87,15 @@ runs:
     if: ${{ inputs.target-platform == 'win' }}
     shell: powershell
     run: |
-      Write-Host "Downloaded cache is $(Get-Item $env:DEPSHASH.tar).length"
-      if ((Get-Item $env:DEPSHASH.tar).length -eq 0) {
+      $src_cache = "$env:DEPSHASH.tar"
+      Write-Host "Downloaded cache is $(Get-Item $src_cache).length"
+      if ((Get-Item $src_cache).length -eq 0) {
         Write-Host "Cache is empty - exiting"
         exit 1
       }
 
       New-Item -ItemType Directory -Path temp-cache
-      C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -oD:temp-cache $env:DEPSHASH.tar
+      C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -oD:temp-cache $src_cache
       Write-Host "Unzipped cache is $(Get-ChildItem -Recurse temp-cache/src | Measure-Object -Property length -Sum).Sum"
 
       if (Test-Path "temp-cache/src") {
@@ -103,7 +104,7 @@ runs:
         Move-Item temp-cache/src src
 
         Write-Host "Deleting zip file"
-        Remove-Item -Force $env:DEPSHASH.tar
+        Remove-Item -Force $src_cache
       }
 
       if (-Not (Test-Path "src/third_party/blink")) {
