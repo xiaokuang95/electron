@@ -168,6 +168,8 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha }}
     - name: Checkout & Sync & Save
       uses: ./src/electron/.github/actions/checkout
+      with:
+        generate-sas-token: 'true'
 
   # GN Check Jobs
   macos-gn-check:

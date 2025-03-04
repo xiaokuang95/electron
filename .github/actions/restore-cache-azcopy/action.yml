@@ -67,7 +67,7 @@ runs:
     shell: bash
     run: rm -f sas-token
   - name: Clean SAS Key (win)
-    if: ${{ inputs.target-platform = 'win' }}
+    if: ${{ inputs.target-platform == 'win' }}
     shell: powershell
     run: Remove-Item -Path sas-token -Force
   - name: Unzip and Ensure Src Cache
