@@ -54,6 +54,7 @@ runs:
       path: |
         sas-token
       key: sas-key-${{ inputs.target-platform }}-${{ github.run_number }}-${{ github.run_attempt }}
+      enableCrossOsArchive: true
   - name: Check If Cache Exists
     id: check-cache
     shell: bash
