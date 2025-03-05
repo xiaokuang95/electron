@@ -43,9 +43,9 @@ runs:
           exit 1
         else
           azcopy copy --log-level=ERROR \
-          "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
+          "http://electronsrcgha.blob.core.windows.net/source/f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz"
         fi
-
+#"https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
     env:
       AZURE_AKS_CACHE_STORAGE_ACCOUNT: f723719aa87a34622b5f7f3
       AZURE_AKS_CACHE_SHARE_NAME: pvc-f6a4089f-b082-4bee-a3f9-c3e1c0c02d8f
@@ -87,16 +87,16 @@ runs:
     if: ${{ inputs.target-platform == 'win' }}
     shell: powershell
     run: |
-      $src_cache = "$env:DEPSHASH.tar"
-      Write-Host "Downloaded cache is $(Get-Item $src_cache).length"
-      if ((Get-Item $src_cache).length -eq 0) {
+      $src_cache = "f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz"
+      $cache_size = $(Get-Item $src_cache).length
+      Write-Host "Downloaded cache is $cache_size"
+      if ($cache_size -eq 0) {
         Write-Host "Cache is empty - exiting"
         exit 1
       }
 
       New-Item -ItemType Directory -Path temp-cache
       C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -otemp-cache $src_cache
-      Write-Host "Unzipped cache is $(Get-ChildItem -Recurse temp-cache/src | Measure-Object -Property length -Sum).Sum"
 
       if (Test-Path "temp-cache/src") {
         Write-Host "Relocating Cache"
