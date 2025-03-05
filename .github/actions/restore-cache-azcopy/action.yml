@@ -95,7 +95,7 @@ runs:
       }
 
       New-Item -ItemType Directory -Path temp-cache
-      C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -oD:temp-cache $src_cache
+      C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -otemp-cache $src_cache
       Write-Host "Unzipped cache is $(Get-ChildItem -Recurse temp-cache/src | Measure-Object -Property length -Sum).Sum"
 
       if (Test-Path "temp-cache/src") {
