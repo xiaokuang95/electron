@@ -53,7 +53,6 @@ runs:
     shell: bash
     run: rm -f sas-token
   - name: Unzip and Ensure Src Cache
-    if: ${{ inputs.target-platform == 'macos' }}
     shell: bash
     run: |
       echo "Downloaded cache is $(du -sh $DEPSHASH.tar | cut -f1)"
@@ -83,34 +82,34 @@ runs:
       echo "Wiping Electron Directory"
       rm -rf src/electron
 
-  - name: Unzip and Ensure Src Cache
-    if: ${{ inputs.target-platform == 'win' }}
-    shell: powershell
-    run: |
-      $src_cache = "$env:DEPSHASH.tar"
-      Write-Host "Downloaded cache is $(Get-Item $src_cache).length"
-      if ((Get-Item $src_cache).length -eq 0) {
-        Write-Host "Cache is empty - exiting"
-        exit 1
-      }
+  # - name: Unzip and Ensure Src Cache
+  #   if: ${{ inputs.target-platform == 'win' }}
+  #   shell: powershell
+  #   run: |
+  #     $src_cache = "$env:DEPSHASH.tar"
+  #     Write-Host "Downloaded cache is $(Get-Item $src_cache).length"
+  #     if ((Get-Item $src_cache).length -eq 0) {
+  #       Write-Host "Cache is empty - exiting"
+  #       exit 1
+  #     }
 
-      New-Item -ItemType Directory -Path temp-cache
-      C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -otemp-cache $src_cache
-      Write-Host "Unzipped cache is $(Get-ChildItem -Recurse temp-cache/src | Measure-Object -Property length -Sum).Sum"
+  #     New-Item -ItemType Directory -Path temp-cache
+  #     C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -otemp-cache $src_cache
+  #     Write-Host "Unzipped cache is $(Get-ChildItem -Recurse temp-cache/src | Measure-Object -Property length -Sum).Sum"
 
-      if (Test-Path "temp-cache/src") {
-        Write-Host "Relocating Cache"
-        Remove-Item -Recurse -Force src
-        Move-Item temp-cache/src src
+  #     if (Test-Path "temp-cache/src") {
+  #       Write-Host "Relocating Cache"
+  #       Remove-Item -Recurse -Force src
+  #       Move-Item temp-cache/src src
 
-        Write-Host "Deleting zip file"
-        Remove-Item -Force $src_cache
-      }
+  #       Write-Host "Deleting zip file"
+  #       Remove-Item -Force $src_cache
+  #     }
 
-      if (-Not (Test-Path "src/third_party/blink")) {
-        Write-Host "Cache was not correctly restored - exiting"
-        exit 1
-      }
+  #     if (-Not (Test-Path "src/third_party/blink")) {
+  #       Write-Host "Cache was not correctly restored - exiting"
+  #       exit 1
+  #     }
 
-      Write-Host "Wiping Electron Directory"
-      Remove-Item -Recurse -Force src/electron
+  #     Write-Host "Wiping Electron Directory"
+  #     Remove-Item -Recurse -Force src/electron
