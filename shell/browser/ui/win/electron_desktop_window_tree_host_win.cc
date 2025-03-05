@@ -108,6 +108,21 @@ bool ElectronDesktopWindowTreeHostWin::HandleMouseEventForCaption(
   return native_window_view_->IsWindowControlsOverlayEnabled();
 }
 
+bool ElectronDesktopWindowTreeHostWin::HandleMouseEvent(ui::MouseEvent* event) {
+  bool is_right_click = event->IsRightMouseButton() &&
+                        event->type() == ui::EventType::kMouseReleased;
+  if (is_right_click && !native_window_view_->has_frame()) {
+    gfx::Point point = event->location();
+    ConvertPixelsToDIP(&point);
+    bool prevent_default = false;
+    native_window_view_->NotifyWindowSystemContextMenu(point.x(), point.y(),
+                                                        &prevent_default);
+    return prevent_default;
+  }
+
+  return views::DesktopWindowTreeHostWin::HandleMouseEvent(event);
+}
+
 void ElectronDesktopWindowTreeHostWin::OnNativeThemeUpdated(
     ui::NativeTheme* observed_theme) {
   HWND hWnd = GetAcceleratedWidget();
