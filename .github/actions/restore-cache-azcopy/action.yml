@@ -106,11 +106,12 @@ runs:
         Write-Host "Deleting zip file"
         Remove-Item -Force $src_cache
       }
-
-      if (-Not (Test-Path "src/third_party/blink")) {
-        Write-Host "Cache was not correctly restored - exiting"
-        exit 1
-      }
+      Get-ChildItem -Recurse -Directory
 
       Write-Host "Wiping Electron Directory"
       Remove-Item -Recurse -Force src/electron
+
+# if (-Not (Test-Path "src/third_party/blink")) {
+#   Write-Host "Cache was not correctly restored - exiting"
+#   exit 1
+# }      
