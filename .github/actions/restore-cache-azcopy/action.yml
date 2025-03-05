@@ -43,7 +43,7 @@ runs:
           exit 1
         else
           azcopy copy --log-level=ERROR \
-          "http://electronsrcgha.blob.core.windows.net/source/f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz"
+          "http://electronsrcgha.blob.core.windows.net/source/f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz" f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz
         fi
 #"https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
     env:
