@@ -96,7 +96,7 @@ runs:
 
       New-Item -ItemType Directory -Path temp-cache
       C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -otemp-cache $src_cache
-
+      Get-ChildItem -Recurse -Directory
       if (Test-Path "temp-cache\src") {
         Write-Host "Relocating Cache"
         Remove-Item -Recurse -Force src
