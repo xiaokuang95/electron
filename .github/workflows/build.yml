@@ -151,7 +151,7 @@ jobs:
       image: ghcr.io/electron/build:${{ needs.setup.outputs.build-image-sha }}
       options: --user root --device /dev/fuse --cap-add SYS_ADMIN
       volumes:
-        - /mnt/cross-instance-cache:/mnt/cross-instance-cache
+        - /mnt/win-cache:/mnt/win-cache
         - /var/run/sas:/var/run/sas
     env:
       CHROMIUM_GIT_COOKIE: ${{ secrets.CHROMIUM_GIT_COOKIE }}

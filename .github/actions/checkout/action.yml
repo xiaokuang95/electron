@@ -43,12 +43,12 @@ runs:
       node src/electron/script/generate-deps-hash.js
       DEPSHASH="v1-src-cache-$(cat src/electron/.depshash)"
       echo "DEPSHASH=$DEPSHASH" >> $GITHUB_ENV
-      if [ "${{ inputs.target-platform }}" = "macos" ]; then
-        echo "CACHE_FILE=$DEPSHASH.tar" >> $GITHUB_ENV
-        echo "CACHE_DRIVE=/mnt/cross-instance-cache" >> $GITHUB_ENV
-      else
+      if [ "${{ inputs.target-platform }}" = "win" ]; then
         echo "CACHE_FILE=$DEPSHASH.tgz" >> $GITHUB_ENV
         echo "CACHE_DRIVE=/mnt/win-cache" >> $GITHUB_ENV
+      else
+        echo "CACHE_FILE=$DEPSHASH.tar" >> $GITHUB_ENV
+        echo "CACHE_DRIVE=/mnt/cross-instance-cache" >> $GITHUB_ENV
       fi
   - name: Generate SAS Key
     if: ${{ inputs.generate-sas-token == 'true' }}
