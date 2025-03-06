@@ -38,7 +38,7 @@ index 932351e288f37fd09ae1a43f44e8b51fb0caa4b8..4a0616bc210d234e51e564daabdd2ebd
    // Overridden from WidgetObserver.
    void OnWidgetThemeChanged(Widget* widget) override;
 diff --git a/ui/views/win/hwnd_message_handler.cc b/ui/views/win/hwnd_message_handler.cc
-index 7f29d902ae0a2f980a56e77e6e25935dab3c0685..ab35b4e2cd2f71ddd6d2fe34319b4b6201958ec3 100644
+index 7f29d902ae0a2f980a56e77e6e25935dab3c0685..f29345661ec4914374655dcb164b7a22a707fe1f 100644
 --- a/ui/views/win/hwnd_message_handler.cc
 +++ b/ui/views/win/hwnd_message_handler.cc
 @@ -3146,15 +3146,19 @@ LRESULT HWNDMessageHandler::HandleMouseEventInternal(UINT message,
@@ -63,7 +63,7 @@ index 7f29d902ae0a2f980a56e77e6e25935dab3c0685..ab35b4e2cd2f71ddd6d2fe34319b4b62
        return 0;
      }
    }
-@@ -3172,18 +3176,28 @@ LRESULT HWNDMessageHandler::HandleMouseEventInternal(UINT message,
+@@ -3172,11 +3176,21 @@ LRESULT HWNDMessageHandler::HandleMouseEventInternal(UINT message,
      message = WM_MOUSEHWHEEL;
    }
  
@@ -75,25 +75,28 @@ index 7f29d902ae0a2f980a56e77e6e25935dab3c0685..ab35b4e2cd2f71ddd6d2fe34319b4b62
 +                    static_cast<DWORD>(message_time),
 +                    {CR_GET_X_LPARAM(l_param), CR_GET_Y_LPARAM(l_param)}};
 +  ui::MouseEvent event(msg);
++  bool right_click_handled = false;
    if (message == WM_RBUTTONUP && is_right_mouse_pressed_on_caption_) {
      // TODO(pkasting): Maybe handle this in DesktopWindowTreeHostWin, where we
      // handle alt-space, or in the frame itself.
      is_right_mouse_pressed_on_caption_ = false;
      ReleaseCapture();
 +
-+    bool handled = delegate_->HandleMouseEvent(&event);
      // |point| is in window coordinates, but WM_NCHITTEST and TrackPopupMenu()
      // expect screen coordinates.
      POINT screen_point = CR_POINT_INITIALIZER_FROM_LPARAM(l_param);
-     MapWindowPoints(hwnd(), HWND_DESKTOP, &screen_point, 1);
+@@ -3184,7 +3198,9 @@ LRESULT HWNDMessageHandler::HandleMouseEventInternal(UINT message,
      w_param = static_cast<WPARAM>(SendMessage(
          hwnd(), WM_NCHITTEST, 0, MAKELPARAM(screen_point.x, screen_point.y)));
--    if (w_param == HTCAPTION || w_param == HTSYSMENU) {
-+    if (!handled && (w_param == HTCAPTION || w_param == HTSYSMENU)) {
-       ShowSystemMenuAtScreenPixelLocation(hwnd(), gfx::Point(screen_point));
+     if (w_param == HTCAPTION || w_param == HTSYSMENU) {
+-      ShowSystemMenuAtScreenPixelLocation(hwnd(), gfx::Point(screen_point));
++      right_click_handled = delegate_->HandleMouseEvent(&event);
++      if (!right_click_handled)
++        ShowSystemMenuAtScreenPixelLocation(hwnd(), gfx::Point(screen_point));
        return 0;
      }
-@@ -3219,14 +3233,6 @@ LRESULT HWNDMessageHandler::HandleMouseEventInternal(UINT message,
+   } else if (message == WM_NCLBUTTONDOWN &&
+@@ -3219,14 +3235,6 @@ LRESULT HWNDMessageHandler::HandleMouseEventInternal(UINT message,
      SetCapture();
    }
  
@@ -108,6 +111,15 @@ index 7f29d902ae0a2f980a56e77e6e25935dab3c0685..ab35b4e2cd2f71ddd6d2fe34319b4b62
    if (IsSynthesizedMouseMessage(message, message_time, l_param)) {
      event.SetFlags(event.flags() | ui::EF_FROM_TOUCH);
    }
+@@ -3301,7 +3309,7 @@ LRESULT HWNDMessageHandler::HandleMouseEventInternal(UINT message,
+   // command menu. This prevents left clicking in the upper left hand corner of
+   // an app window and then right clicking from sending the right click to the
+   // renderer and bringing up a web contents context menu.
+-  if (!handling_mouse_menu_ || message != WM_RBUTTONUP) {
++  if (!right_click_handled && (!handling_mouse_menu_ || message != WM_RBUTTONUP)) {
+     handled = delegate_->HandleMouseEvent(&event);
+   }
+ 
 diff --git a/ui/views/win/hwnd_message_handler_delegate.h b/ui/views/win/hwnd_message_handler_delegate.h
 index 04dea68d74ea4f559db60f716c919e555db9ec80..2f8bd1a3c156bb6c04663c74b7279bb59926fc3d 100644
 --- a/ui/views/win/hwnd_message_handler_delegate.h
