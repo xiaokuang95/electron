@@ -97,18 +97,18 @@ runs:
       New-Item -ItemType Directory -Path temp-cache
       C:\ProgramData\Chocolatey\bin\7z.exe -aoa x -otemp-cache $src_cache
 
-      if (Test-Path "temp-cache/src") {
+      if (Test-Path "temp-cache\src") {
         Write-Host "Relocating Cache"
         Remove-Item -Recurse -Force src
-        Move-Item temp-cache/src src
+        Move-Item temp-cache\src src
 
         Write-Host "Deleting zip file"
         Remove-Item -Force $src_cache
       }
-      if (-Not (Test-Path "src/third_party/blink")) {
+      if (-Not (Test-Path "src\third_party\blink")) {
         Write-Host "Cache was not correctly restored - exiting"
         exit 1
       }
 
       Write-Host "Wiping Electron Directory"
-      Remove-Item -Recurse -Force src/electron
+      Remove-Item -Recurse -Force src\electron
