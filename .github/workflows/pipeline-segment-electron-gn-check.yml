@@ -86,6 +86,8 @@ jobs:
     - name: Restore src cache via AKS
       if: ${{ inputs.target-platform == 'linux' || inputs.target-platform == 'win' }}
       uses: ./src/electron/.github/actions/restore-cache-aks
+      with:
+        target-platform: ${{ inputs.target-platform }}
     - name: Run Electron Only Hooks
       run: |
         echo "solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]" > tmpgclient

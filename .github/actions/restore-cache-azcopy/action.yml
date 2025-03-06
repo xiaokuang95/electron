@@ -6,12 +6,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-  - name: Install zstd on Windows for actions cache
-    if: ${{ inputs.target-platform == 'win' }}
-    shell: powershell
-    run: |        
-      choco install -y --no-progress zstandard --version=1.5.6
-      choco install -y --no-progress azcopy10
   - name: Obtain SAS Key
     continue-on-error: true
     uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf
@@ -42,13 +36,18 @@ runs:
           echo "SAS Token not found; exiting src cache download early..."
           exit 1
         else
-          azcopy copy --log-level=ERROR \
-          "https://electronsrcgha.blob.core.windows.net/source/f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz" f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz
+          if [ "${{ inputs.target-platform }}" = "win" ]; then
+            azcopy copy --log-level=ERROR \
+            "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_WIN_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tgz
+          else
+            azcopy copy --log-level=ERROR \
+            "https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
+          fi            
         fi
-#"https://${{ env.AZURE_AKS_CACHE_STORAGE_ACCOUNT }}.file.core.windows.net/${{ env.AZURE_AKS_CACHE_SHARE_NAME }}/${{ env.CACHE_PATH }}?$sas_token" $DEPSHASH.tar
     env:
       AZURE_AKS_CACHE_STORAGE_ACCOUNT: f723719aa87a34622b5f7f3
       AZURE_AKS_CACHE_SHARE_NAME: pvc-f6a4089f-b082-4bee-a3f9-c3e1c0c02d8f
+      AZURE_AKS_WIN_CACHE_SHARE_NAME: pvc-71dec4f2-0d44-4fd1-a2c3-add049d70bdf
   - name: Clean SAS Key
     shell: bash
     run: rm -f sas-token
@@ -87,7 +86,7 @@ runs:
     if: ${{ inputs.target-platform == 'win' }}
     shell: powershell
     run: |
-      $src_cache = "f298c0338a22e35673e15f18871120b5c78c9283a94d7da9f2e2f7d9cb9c8772.tgz"
+      $src_cache = "$env:DEPSHASH.tgz"
       $cache_size = $(Get-Item $src_cache).length
       Write-Host "Downloaded cache is $cache_size"
       if ($cache_size -eq 0) {
@@ -106,12 +105,10 @@ runs:
         Write-Host "Deleting zip file"
         Remove-Item -Force $src_cache
       }
-      Get-ChildItem -Recurse -Directory
+      if (-Not (Test-Path "src/third_party/blink")) {
+        Write-Host "Cache was not correctly restored - exiting"
+        exit 1
+      }
 
       Write-Host "Wiping Electron Directory"
       Remove-Item -Recurse -Force src/electron
-
-# if (-Not (Test-Path "src/third_party/blink")) {
-#   Write-Host "Cache was not correctly restored - exiting"
-#   exit 1
-# }      
