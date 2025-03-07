@@ -75,6 +75,7 @@ class NativeWindowViews : public NativeWindow,
       const extensions::SizeConstraints& size_constraints) override;
 #if BUILDFLAG(IS_WIN)
   extensions::SizeConstraints GetContentSizeConstraints() const override;
+  bool IsSnapped() const override;
 #endif
   void SetResizable(bool resizable) override;
   bool MoveAbove(const std::string& sourceId) override;
