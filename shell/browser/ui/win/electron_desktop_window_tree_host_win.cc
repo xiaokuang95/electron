@@ -109,9 +109,10 @@ bool ElectronDesktopWindowTreeHostWin::HandleMouseEventForCaption(
 }
 
 bool ElectronDesktopWindowTreeHostWin::HandleMouseEvent(ui::MouseEvent* event) {
-  bool is_right_click = event->IsRightMouseButton() &&
-                        event->type() == ui::EventType::kMouseReleased;
-  if (is_right_click && !native_window_view_->has_frame()) {
+  bool is_menu_right_click = event->IsRightMouseButton() &&
+                             event->is_system_menu() &&
+                             event->type() == ui::EventType::kMouseReleased;
+  if (is_menu_right_click && !native_window_view_->has_frame()) {
     bool prevent_default = false;
     native_window_view_->NotifyWindowSystemContextMenu(event->x(), event->y(),
                                                        &prevent_default);
