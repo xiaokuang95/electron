@@ -1,0 +1,138 @@
+From 06fada385d7965625469b646f1834d7789039479 Mon Sep 17 00:00:00 2001
+From: wangtian <xiaokuang95@gmail.com>
+Date: Thu, 10 Apr 2025 22:46:17 +0800
+Subject: [PATCH] blink mediaRecorder h265
+
+---
+ .../media_recorder_encoder_wrapper.cc            |  1 +
+ .../mediarecorder/media_recorder_handler.cc      | 16 ++++++++++++++++
+ .../mediarecorder/video_track_recorder.cc        |  5 +++++
+ .../modules/mediarecorder/video_track_recorder.h |  1 +
+ 4 files changed, 23 insertions(+)
+
+diff --git a/third_party/blink/renderer/modules/mediarecorder/media_recorder_encoder_wrapper.cc b/third_party/blink/renderer/modules/mediarecorder/media_recorder_encoder_wrapper.cc
+index 66e990a5e1e95..8bbefde347d0a 100644
+--- a/third_party/blink/renderer/modules/mediarecorder/media_recorder_encoder_wrapper.cc
++++ b/third_party/blink/renderer/modules/mediarecorder/media_recorder_encoder_wrapper.cc
+@@ -58,6 +58,7 @@ MediaRecorderEncoderWrapper::MediaRecorderEncoderWrapper(
+       media::VideoCodec::kVP8,
+       media::VideoCodec::kVP9,
+       media::VideoCodec::kAV1,
++      media::VideoCodec::kHEVC,
+   };
+   CHECK(base::Contains(kSupportedCodecs, codec_));
+   options_.latency_mode = media::VideoEncoder::LatencyMode::Quality;
+diff --git a/third_party/blink/renderer/modules/mediarecorder/media_recorder_handler.cc b/third_party/blink/renderer/modules/mediarecorder/media_recorder_handler.cc
+index a48efe1effc45..b7c19671d8360 100644
+--- a/third_party/blink/renderer/modules/mediarecorder/media_recorder_handler.cc
++++ b/third_party/blink/renderer/modules/mediarecorder/media_recorder_handler.cc
+@@ -92,6 +92,8 @@ VideoTrackRecorder::CodecId CodecIdFromMediaVideoCodec(media::VideoCodec id) {
+ #if BUILDFLAG(USE_PROPRIETARY_CODECS)
+     case media::VideoCodec::kH264:
+       return VideoTrackRecorder::CodecId::kH264;
++    case media::VideoCodec::kHEVC:
++      return VideoTrackRecorder::CodecId::kHEVC;
+ #endif
+     case media::VideoCodec::kAV1:
+       return VideoTrackRecorder::CodecId::kAv1;
+@@ -111,6 +113,8 @@ media::VideoCodec MediaVideoCodecFromCodecId(VideoTrackRecorder::CodecId id) {
+ #if BUILDFLAG(USE_PROPRIETARY_CODECS)
+     case VideoTrackRecorder::CodecId::kH264:
+       return media::VideoCodec::kH264;
++    case VideoTrackRecorder::CodecId::kHEVC:
++      return media::VideoCodec::kHEVC;
+ #endif
+     case VideoTrackRecorder::CodecId::kAv1:
+       return media::VideoCodec::kAV1;
+@@ -163,6 +167,12 @@ VideoTrackRecorder::CodecProfile VideoStringToCodecProfile(
+     if (auto result = media::ParseAVCCodecId(avc1_str.Ascii())) {
+       return {codec_id, result->profile, result->level};
+     }
++    if (codecs_str.Find("h265") != kNotFound)
++      codec_id = VideoTrackRecorder::CodecId::kHEVC;
++    wtf_size_t hevc_start = codecs_str.Find("hevc");
++    if (hevc_start != kNotFound) {
++      codec_id = VideoTrackRecorder::CodecId::kHEVC;
++    }    
+   }
+ #endif
+   // TODO(crbug.com/1465734): Remove the wrong AV1 codecs string, "av1", once
+@@ -260,6 +270,8 @@ bool MediaRecorderHandler::CanSupportMimeType(const String& type,
+ #if BUILDFLAG(USE_PROPRIETARY_CODECS)
+     "h264",
+     "avc1",
++    "h265",
++    "hvc1",
+ #endif
+     "av01",
+     // TODO(crbug.com/1465734): Remove the wrong AV1 codecs string, "av1", once
+@@ -710,6 +722,7 @@ String MediaRecorderHandler::ActualMimeType() {
+         break;
+ #if BUILDFLAG(USE_PROPRIETARY_CODECS)
+       case VideoTrackRecorder::CodecId::kH264:
++      case VideoTrackRecorder::CodecId::kHEVC:
+         if (!passthrough_enabled_ &&
+             EqualIgnoringASCIICase(type_, "video/mp4")) {
+           mime_type.Append(type_.Characters8(), type_.length());
+@@ -742,6 +755,9 @@ String MediaRecorderHandler::ActualMimeType() {
+                   .c_str());
+         }
+         break;
++      case VideoTrackRecorder::CodecId::kHEVC:
++        mime_type.Append("hvc1");
++        break;
+ #endif
+       case VideoTrackRecorder::CodecId::kAv1:
+         mime_type.Append("av01");
+diff --git a/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.cc b/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.cc
+index b97b7e08e6b54..1eb99917f3e95 100644
+--- a/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.cc
++++ b/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.cc
+@@ -128,6 +128,7 @@ static const struct {
+     {CodecId::kVp9, media::VP9PROFILE_MIN, media::VP9PROFILE_MAX},
+ #if BUILDFLAG(USE_PROPRIETARY_CODECS)
+     {CodecId::kH264, media::H264PROFILE_MIN, media::H264PROFILE_MAX},
++    {CodecId::kHEVC, media::HEVCPROFILE_MIN, media::HEVCPROFILE_MAIN},
+ #endif
+     {CodecId::kAv1, media::AV1PROFILE_MIN, media::AV1PROFILE_MAX},
+ };
+@@ -220,6 +221,7 @@ void UmaHistogramForCodec(bool uses_acceleration, CodecId codec_id) {
+       case CodecId::kAv1:
+         histogram = VideoTrackRecorderCodecHistogram::kAv1Hw;
+         break;
++      case CodecId::kHEVC:
+       case CodecId::kLast:
+         break;
+     }
+@@ -239,6 +241,7 @@ void UmaHistogramForCodec(bool uses_acceleration, CodecId codec_id) {
+       case CodecId::kAv1:
+         histogram = VideoTrackRecorderCodecHistogram::kAv1Sw;
+         break;
++      case CodecId::kHEVC:
+       case CodecId::kLast:
+         break;
+     }
+@@ -258,6 +261,8 @@ std::optional<media::VideoCodecProfile> GetMediaVideoCodecProfileForSwEncoder(
+       return media::VP8PROFILE_ANY;
+     case CodecId::kVp9:
+       return media::VP9PROFILE_MIN;
++    case CodecId::kHEVC:
++      return media::HEVCPROFILE_MAIN;
+ #if BUILDFLAG(ENABLE_LIBAOM)
+     case CodecId::kAv1:
+       return media::AV1PROFILE_MIN;
+diff --git a/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.h b/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.h
+index 55fc0df2beab5..014e54662cc8c 100644
+--- a/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.h
++++ b/third_party/blink/renderer/modules/mediarecorder/video_track_recorder.h
+@@ -72,6 +72,7 @@ class VideoTrackRecorder : public TrackRecorder<MediaStreamVideoSink> {
+     kVp9,
+ #if BUILDFLAG(USE_PROPRIETARY_CODECS)
+     kH264,
++    kHEVC,
+ #endif
+     kAv1,
+     kLast
+-- 
+2.34.1
+
